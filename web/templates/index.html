@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Life in Weeks - Visualize Your Life</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"
+      integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/">Week by Week</a>
+        <a
+          href="/login"
+          hx-get="/login"
+          hx-target="#main-content"
+          hx-push-url="true"
+          >Login</a
+        >
+        <a
+          href="/register"
+          hx-get="/register"
+          hx-target="#main-content"
+          hx-push-url="true"
+          class="cta-button"
+          >Get Started</a
+        >
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="hero">
+        <h1>Document your life — week by week.</h1>
+        <p>
+          Each week is a precious opportunity. Visualize your past, present, and
+          future to live a more intentional life.
+        </p>
+        <button
+          hx-get="/register"
+          hx-target="#main-content"
+          hx-push-url="true"
+          class="cta-button"
+        >
+          Visualize Your Life Now
+        </button>
+      </section>
+
+      <section class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+          <div class="step">
+            <h3>1. Register</h3>
+            <p>Create your account in seconds.</p>
+          </div>
+          <div class="step">
+            <h3>2. See Your Grid</h3>
+            <p>
+              Enter your date of birth to generate your personalized life grid.
+            </p>
+          </div>
+          <div class="step">
+            <h3>3. Fill Your Weeks</h3>
+            <p>Click on any week to add a blog post, reflection, or goal.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- A visual representation of the life grid can be included here -->
+    </main>
+
+    <footer>
+      <!-- Footer content -->
+    </footer>
+  </body>
+</html>

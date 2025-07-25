@@ -1,0 +1,33 @@
+<div class="form-container">
+  <h2>Create Your Account</h2>
+  <form hx-post="/register" hx-target="#main-content" hx-swap="innerHTML">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required />
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required />
+      <small>Password must be at least 8 characters long.</small>
+    </div>
+    <div class="form-group">
+      <label for="dob">Date of Birth</label>
+      <input type="date" id="dob" name="dob" required />
+    </div>
+    <button type="submit">Register</button>
+  </form>
+  <p>
+    Already have an account?
+    <a
+      href="/login"
+      hx-get="/login"
+      hx-target="#main-content"
+      hx-push-url="true"
+      >Login</a
+    >
+  </p>
+</div>

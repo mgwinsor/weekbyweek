@@ -1,0 +1,11 @@
+# Project Files
+data/
+
+# Test binaries
+*.test
+
+# Editor and OS files
+*.swp
+*.bak
+*~
+.DS_Store
