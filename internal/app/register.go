@@ -24,6 +24,13 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
+
+	err := valdiatePassword(password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	dateOfBirth, err := time.Parse(time.DateOnly, r.FormValue("dob"))
 	if err != nil {
 		http.Error(w, "Invalid date of birth", http.StatusBadRequest)

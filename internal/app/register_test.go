@@ -54,20 +54,25 @@ func TestRegisterPost(t *testing.T) {
 		{
 			name:     "successfully creates user",
 			mockDB:   successMockDB,
-			formData: "username=newuser&email=new@example.com&password=a$$w0rd123&dob=1992-11-21",
+			formData: "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode: http.StatusCreated,
 		},
 		{
 			name:     "fails to create user with duplicate username",
 			mockDB:   failUsernameMockDB,
-			formData: "username=existinguser&email=new@example.com&password=a$$w0rd123&dob=1992-11-21",
+			formData: "username=existinguser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode: http.StatusConflict,
 		},
 		{
 			name:     "fails to create user with duplicate email",
 			mockDB:   failEmailMockDB,
-			formData: "username=newuser&email=existing@example.com&password=a$$w0rd123&dob=1992-11-21",
+			formData: "username=newuser&email=existing@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode: http.StatusConflict,
+		},
+		{
+			name:     "fails to validate weak password",
+			formData: "username=newuser&email=existing@example.com&password=Abc123&dob=1992-11-21",
+			wantCode: http.StatusBadRequest,
 		},
 	}
 
