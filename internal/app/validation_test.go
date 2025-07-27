@@ -2,6 +2,99 @@ package app
 
 import "testing"
 
+func TestValidateUsernameSyntax(t *testing.T) {
+	tests := []struct {
+		name          string
+		username      string
+		wantError     bool
+		expectedError string
+	}{
+		{
+			name:          "username valid",
+			username:      "user_123",
+			wantError:     false,
+			expectedError: "",
+		},
+		{
+			name:          "username too short",
+			username:      "ab",
+			wantError:     true,
+			expectedError: ErrorUsernameTooShort.Error(),
+		},
+		{
+			name:          "username too long",
+			username:      "areallyreallylongusername",
+			wantError:     true,
+			expectedError: ErrorUsernameTooLong.Error(),
+		},
+		{
+			name:          "username contains invalid character",
+			username:      "invalid username",
+			wantError:     true,
+			expectedError: ErrorUsernameInvalidChars.Error(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateUsernameSyntax(tt.username)
+
+			if tt.wantError {
+				if err == nil {
+					t.Fatal("expected an error; got 'nil'")
+				}
+				if err.Error() != tt.expectedError {
+					t.Errorf("expected error '%s'; got '%s'", tt.expectedError, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("did not expect an error; got '%v'", err)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateEmailSyntax(t *testing.T) {
+	tests := []struct {
+		name          string
+		email         string
+		wantError     bool
+		expectedError string
+	}{
+		{
+			name:          "email valid",
+			email:         "user@example.com",
+			wantError:     false,
+			expectedError: "",
+		},
+		{
+			name:          "email invalid",
+			email:         "not-email",
+			wantError:     true,
+			expectedError: ErrorEmailInvalid.Error(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateEmailSyntax(tt.email)
+
+			if tt.wantError {
+				if err == nil {
+					t.Fatal("expected an error; got 'nil'")
+				}
+				if err.Error() != tt.expectedError {
+					t.Errorf("expected error '%s'; got '%s'", tt.expectedError, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("did not expect an error; got '%v'", err)
+				}
+			}
+		})
+	}
+}
+
 func TestValidatePassword(t *testing.T) {
 	tests := []struct {
 		name          string
