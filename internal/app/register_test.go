@@ -22,10 +22,10 @@ func TestRegisterPost(t *testing.T) {
 			id, _ := uuid.Parse("1216461d-0f93-4059-98c3-bf922acb752b")
 			return database.User{ID: id, Username: arg.Username, Email: arg.Email}, nil
 		},
-		GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+		GetUserByUsernameFunc: func(ctx context.Context, username string) (database.User, error) {
 			return database.User{}, sql.ErrNoRows
 		},
-		GetUserByUsernameFunc: func(ctx context.Context, username string) (database.User, error) {
+		GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
 			return database.User{}, sql.ErrNoRows
 		},
 	}
@@ -33,6 +33,9 @@ func TestRegisterPost(t *testing.T) {
 	failUsernameMockDB := &mockQuerier{
 		GetUserByUsernameFunc: func(ctx context.Context, username string) (database.User, error) {
 			return database.User{Username: "existinguser"}, nil
+		},
+		GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+			return database.User{}, sql.ErrNoRows
 		},
 	}
 
@@ -46,40 +49,48 @@ func TestRegisterPost(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		mockDB   *mockQuerier
-		formData string
-		wantCode int
+		name                string
+		mockDB              *mockQuerier
+		formInput           string
+		wantCode            int
+		wantBodyContains    string
+		notWantBodyContains string
 	}{
 		{
-			name:     "successfully creates user",
-			mockDB:   successMockDB,
-			formData: "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
-			wantCode: http.StatusCreated,
+			name:                "successfully creates user",
+			mockDB:              successMockDB,
+			formInput:           "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			wantCode:            http.StatusCreated,
+			wantBodyContains:    "Your Life in Weeks",
+			notWantBodyContains: "Create Your Account",
 		},
 		{
-			name:     "fails to create user with duplicate username",
-			mockDB:   failUsernameMockDB,
-			formData: "username=existinguser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
-			wantCode: http.StatusConflict,
+			name:             "fails to create user with duplicate username",
+			mockDB:           failUsernameMockDB,
+			formInput:        "username=existinguser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			wantCode:         http.StatusOK,
+			wantBodyContains: ErrorUsernameExists.Error(),
 		},
 		{
-			name:     "fails to create user with duplicate email",
-			mockDB:   failEmailMockDB,
-			formData: "username=newuser&email=existing@example.com&password=A$$w0rd12345&dob=1992-11-21",
-			wantCode: http.StatusConflict,
+			name:             "fails to create user with duplicate email",
+			mockDB:           failEmailMockDB,
+			formInput:        "username=newuser&email=existing@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			wantCode:         http.StatusOK,
+			wantBodyContains: ErrorEmailExists.Error(),
 		},
 		{
-			name:     "fails to validate weak password",
-			formData: "username=newuser&email=existing@example.com&password=Abc123&dob=1992-11-21",
-			wantCode: http.StatusBadRequest,
+			name:             "fails to validate weak password",
+			mockDB:           successMockDB,
+			formInput:        "username=newuser&email=existing@example.com&password=ab&dob=1992-11-21",
+			wantCode:         http.StatusOK,
+			wantBodyContains: ErrorPasswordTooShort.Error(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			svr := NewServer(tt.mockDB, templates)
-			form := strings.NewReader(tt.formData)
+			form := strings.NewReader(tt.formInput)
 			req := httptest.NewRequest("POST", "/register", form)
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 			rr := httptest.NewRecorder()
@@ -88,6 +99,15 @@ func TestRegisterPost(t *testing.T) {
 
 			if rr.Code != tt.wantCode {
 				t.Errorf("expected status code %d; got %d", tt.wantCode, rr.Code)
+			}
+
+			body := rr.Body.String()
+			if !strings.Contains(body, tt.wantBodyContains) {
+				t.Errorf("expected body to contain %s; it did not", tt.wantBodyContains)
+			}
+
+			if tt.notWantBodyContains != "" && strings.Contains(body, tt.notWantBodyContains) {
+				t.Errorf("expected body NOT to contain %s; it did", tt.notWantBodyContains)
 			}
 		})
 	}

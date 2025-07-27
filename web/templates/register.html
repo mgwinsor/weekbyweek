@@ -1,23 +1,57 @@
 <div class="form-container">
-  <h2>Create Your Account</h2>
+  <h2>{{.PageTitle}}</h2>
   <form hx-post="/register" hx-target="#main-content" hx-swap="innerHTML">
     <div class="form-group">
       <label for="username">Username</label>
-      <input type="text" id="username" name="username" required />
+      <input
+        type="text"
+        id="username"
+        name="username"
+        value="{{ .FormValues.username }}"
+        class="form-control {{ if .Errors.username }}is-invalid{{ end }}"
+        required
+      />
+      {{ if .Errors.username }}
+      <div class="invalid-feedback">{{ .Errors.username }}</div>
+      {{ end }}
     </div>
+
     <div class="form-group">
       <label for="email">Email</label>
-      <input type="email" id="email" name="email" required />
+      <input
+        type="email"
+        id="email"
+        name="email"
+        value="{{ .FormValues.email }}"
+        class="form-control {{ if .Errors.email }}is-invalid{{ end }}"
+        required
+      />
+      {{ if .Errors.email }}
+      <div class="invalid-feedback">{{ .Errors.email }}</div>
+      {{ end }}
     </div>
+
     <div class="form-group">
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" required />
-      <small>Password must be at least 8 characters long.</small>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        value="{{ .FormValues.password }}"
+        class="form-control {{ if .Errors.password }}is-invalid{{ end }}"
+        required
+      />
+      <small>Password must be at least 12 characters long.</small>
+      {{ if .Errors.password }}
+      <div class="invalid-feedback">{{ .Errors.password }}</div>
+      {{ end }}
     </div>
+
     <div class="form-group">
       <label for="dob">Date of Birth</label>
       <input type="date" id="dob" name="dob" required />
     </div>
+
     <button type="submit">Register</button>
   </form>
   <p>

@@ -7,6 +7,13 @@ import (
 	"github.com/mgwinsor/weekbyweek/internal/database"
 )
 
+type PageData struct {
+	PageTitle  string
+	User       database.User
+	FormValues map[string]string
+	Errors     map[string]string
+}
+
 type Server struct {
 	db        database.Querier
 	templates *template.Template

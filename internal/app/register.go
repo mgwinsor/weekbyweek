@@ -2,7 +2,6 @@ package app
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -21,43 +20,60 @@ func (s *Server) registerGet(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 
+	data := PageData{
+		PageTitle:  "Create Your Account",
+		FormValues: make(map[string]string),
+		Errors:     make(map[string]string),
+	}
+
+	for k, v := range r.PostForm {
+		data.FormValues[k] = v[0]
+	}
+
 	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
-
-	err := valdiatePassword(password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	dateOfBirth, err := time.Parse(time.DateOnly, r.FormValue("dob"))
 	if err != nil {
 		http.Error(w, "Invalid date of birth", http.StatusBadRequest)
 		return
 	}
 
-	user, err := s.db.GetUserByUsername(r.Context(), username)
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-	}
-	if user != (database.User{}) {
-		http.Error(w, "Username already registered", http.StatusConflict)
-		return
+	if err := validateUsernameSyntax(username); err != nil {
+		data.Errors["username"] = err.Error()
 	}
 
-	user, err = s.db.GetUserByEmail(r.Context(), email)
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+	if err := validateEmailSyntax(email); err != nil {
+		data.Errors["email"] = err.Error()
+	}
+
+	if err := valdiatePassword(password); err != nil {
+		data.Errors["password"] = err.Error()
+	}
+
+	if _, exists := data.Errors["username"]; !exists {
+		_, err := s.db.GetUserByUsername(r.Context(), username)
+		if err == nil {
+			data.Errors["username"] = ErrorUsernameExists.Error()
+		} else if err != sql.ErrNoRows {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 	}
-	if user != (database.User{}) {
-		http.Error(w, "Email already registerd", http.StatusConflict)
+
+	if _, exists := data.Errors["email"]; !exists {
+		_, err := s.db.GetUserByEmail(r.Context(), email)
+		if err == nil {
+			data.Errors["email"] = ErrorEmailExists.Error()
+		} else if err != sql.ErrNoRows {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if len(data.Errors) > 0 {
+		w.WriteHeader(http.StatusOK)
+		s.templates.ExecuteTemplate(w, "register.html", data)
 		return
 	}
 
