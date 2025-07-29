@@ -61,7 +61,7 @@ func TestRegisterPost(t *testing.T) {
 			mockDB:              successMockDB,
 			formInput:           "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode:            http.StatusCreated,
-			wantBodyContains:    "Your Life in Weeks",
+			wantBodyContains:    "",
 			notWantBodyContains: "Create Your Account",
 		},
 		{

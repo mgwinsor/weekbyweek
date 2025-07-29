@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mgwinsor/weekbyweek/internal/auth"
 	"github.com/mgwinsor/weekbyweek/internal/database"
 )
 
@@ -77,12 +78,20 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hasher := auth.BcryptHasher{}
+	passwordHash, err := auth.HashPassword(password, hasher)
+	if err != nil {
+		http.Error(w, "Could not hash password", http.StatusInternalServerError)
+		return
+	}
+
 	_, err = s.db.CreateUser(r.Context(), database.CreateUserParams{
 		ID:           uuid.New(),
 		Username:     username,
 		Email:        email,
-		PasswordHash: password,
+		PasswordHash: passwordHash,
 		DateOfBirth:  dateOfBirth,
 	})
+	w.Header().Set("HX-Redirect", "/home")
 	w.WriteHeader(http.StatusCreated)
 }
