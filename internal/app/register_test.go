@@ -89,6 +89,28 @@ func TestRegisterPost(t *testing.T) {
 			wantCode:         http.StatusInternalServerError,
 			wantBodyContains: "Could not hash password",
 		},
+		{
+			name:      "fails to get data from database with username",
+			formInput: "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			mockDB: func() *mockDB {
+				m := newDefaultMockDB()
+				m.getUserByUsernameError = errors.New("Internal database error")
+				return m
+			}(),
+			wantCode:         http.StatusInternalServerError,
+			wantBodyContains: "Internal Server Error",
+		},
+		{
+			name:      "fails to get data from database with email",
+			formInput: "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			mockDB: func() *mockDB {
+				m := newDefaultMockDB()
+				m.getUserByEmailError = errors.New("Internal database error")
+				return m
+			}(),
+			wantCode:         http.StatusInternalServerError,
+			wantBodyContains: "Internal Server Error",
+		},
 	}
 
 	for _, tt := range tests {
