@@ -3,6 +3,8 @@ package auth
 import (
 	"errors"
 	"testing"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type mockHasher struct {
@@ -53,5 +55,23 @@ func TestHashPassword(t *testing.T) {
 				t.Errorf("want error: %v; got %v", tt.wantError, err)
 			}
 		})
+	}
+}
+
+func TestHashPassword_Integration(t *testing.T) {
+	password := "Password123!"
+	hasher := BcryptHasher{}
+
+	hash, err := HashPassword(password, hasher)
+	if err != nil {
+		t.Errorf("HashPassword() returned an unexpected error: %v", err)
+	}
+	if hash == "" {
+		t.Errorf("HashPassword() returned an empty hash")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		t.Fatalf("bcrypt.CompareHashAndPassword() failed: %v", err)
 	}
 }

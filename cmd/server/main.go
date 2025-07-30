@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mgwinsor/weekbyweek/internal/app"
+	"github.com/mgwinsor/weekbyweek/internal/auth"
 	"github.com/mgwinsor/weekbyweek/internal/database"
 	_ "modernc.org/sqlite"
 )
@@ -24,9 +25,13 @@ func main() {
 	}
 	dbQueries := database.New(dbConn)
 
+	authAdapter := &authAdapter{
+		hasher: auth.BcryptHasher{},
+	}
+
 	templates := template.Must(template.ParseGlob("web/templates/*.html"))
 
-	svr := app.NewServer(dbQueries, templates)
+	svr := app.NewServer(dbQueries, authAdapter, templates)
 
 	mux := http.NewServeMux()
 

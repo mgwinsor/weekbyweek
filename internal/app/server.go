@@ -7,6 +7,10 @@ import (
 	"github.com/mgwinsor/weekbyweek/internal/database"
 )
 
+type AuthService interface {
+	HashPassword(password string) (string, error)
+}
+
 type PageData struct {
 	PageTitle  string
 	User       database.User
@@ -15,14 +19,16 @@ type PageData struct {
 }
 
 type Server struct {
-	db        database.Querier
-	templates *template.Template
+	db          database.Querier
+	authService AuthService
+	templates   *template.Template
 }
 
-func NewServer(db database.Querier, templates *template.Template) *Server {
+func NewServer(db database.Querier, authService AuthService, templates *template.Template) *Server {
 	return &Server{
-		db:        db,
-		templates: templates,
+		db:          db,
+		authService: authService,
+		templates:   templates,
 	}
 }
 

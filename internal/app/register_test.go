@@ -1,95 +1,99 @@
 package app
 
 import (
-	"context"
-	"database/sql"
+	"errors"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/google/uuid"
-	"github.com/mgwinsor/weekbyweek/internal/database"
 )
 
 func TestRegisterPost(t *testing.T) {
 
 	templates := template.Must(template.ParseGlob("../../web/templates/*.html"))
 
-	successMockDB := &mockQuerier{
-		CreateUserFunc: func(ctx context.Context, arg database.CreateUserParams) (database.User, error) {
-			id, _ := uuid.Parse("1216461d-0f93-4059-98c3-bf922acb752b")
-			return database.User{ID: id, Username: arg.Username, Email: arg.Email}, nil
-		},
-		GetUserByUsernameFunc: func(ctx context.Context, username string) (database.User, error) {
-			return database.User{}, sql.ErrNoRows
-		},
-		GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
-			return database.User{}, sql.ErrNoRows
-		},
-	}
-
-	failUsernameMockDB := &mockQuerier{
-		GetUserByUsernameFunc: func(ctx context.Context, username string) (database.User, error) {
-			return database.User{Username: "existinguser"}, nil
-		},
-		GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
-			return database.User{}, sql.ErrNoRows
-		},
-	}
-
-	failEmailMockDB := &mockQuerier{
-		GetUserByUsernameFunc: func(ctx context.Context, username string) (database.User, error) {
-			return database.User{}, sql.ErrNoRows
-		},
-		GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
-			return database.User{Email: "existing@example.com"}, nil
-		},
-	}
-
 	tests := []struct {
 		name                string
-		mockDB              *mockQuerier
+		mockAuth            *mockAuthAdapter
+		mockDB              *mockDB
 		formInput           string
 		wantCode            int
 		wantBodyContains    string
 		notWantBodyContains string
 	}{
 		{
-			name:                "successfully creates user",
-			mockDB:              successMockDB,
+			name: "successfully creates user",
+			mockAuth: &mockAuthAdapter{
+				hash: "hashed-password",
+				err:  nil,
+			},
+			mockDB:              newDefaultMockDB(),
 			formInput:           "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode:            http.StatusCreated,
 			wantBodyContains:    "",
 			notWantBodyContains: "Create Your Account",
 		},
 		{
-			name:             "fails to create user with duplicate username",
-			mockDB:           failUsernameMockDB,
+			name: "fails to create user with duplicate username",
+			mockDB: func() *mockDB {
+				m := newDefaultMockDB()
+				m.getUserByUsernameError = nil
+				return m
+			}(),
 			formInput:        "username=existinguser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode:         http.StatusOK,
 			wantBodyContains: ErrorUsernameExists.Error(),
 		},
 		{
-			name:             "fails to create user with duplicate email",
-			mockDB:           failEmailMockDB,
+			name: "fails to create user with duplicate email",
+			mockDB: func() *mockDB {
+				m := newDefaultMockDB()
+				m.getUserByEmailError = nil
+				return m
+			}(),
 			formInput:        "username=newuser&email=existing@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode:         http.StatusOK,
 			wantBodyContains: ErrorEmailExists.Error(),
 		},
 		{
 			name:             "fails to validate weak password",
-			mockDB:           successMockDB,
+			mockDB:           newDefaultMockDB(),
 			formInput:        "username=newuser&email=existing@example.com&password=ab&dob=1992-11-21",
 			wantCode:         http.StatusOK,
 			wantBodyContains: ErrorPasswordTooShort.Error(),
+		},
+		{
+			name: "fails to create user in database",
+			mockAuth: &mockAuthAdapter{
+				hash: "hashed-password",
+				err:  nil,
+			},
+			mockDB: func() *mockDB {
+				m := newDefaultMockDB()
+				m.createUserError = errors.New("Internal database error")
+				return m
+			}(),
+			formInput:        "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			wantCode:         http.StatusInternalServerError,
+			wantBodyContains: "Internal Server Error",
+		},
+		{
+			name: "fails to hash password",
+			mockAuth: &mockAuthAdapter{
+				hash: "",
+				err:  errors.New("bcrypt error"),
+			},
+			mockDB:           newDefaultMockDB(),
+			formInput:        "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
+			wantCode:         http.StatusInternalServerError,
+			wantBodyContains: "Could not hash password",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svr := NewServer(tt.mockDB, templates)
+			svr := NewServer(tt.mockDB, tt.mockAuth, templates)
 			form := strings.NewReader(tt.formInput)
 			req := httptest.NewRequest("POST", "/register", form)
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")

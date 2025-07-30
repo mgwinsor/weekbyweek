@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/mgwinsor/weekbyweek/internal/auth"
 	"github.com/mgwinsor/weekbyweek/internal/database"
 )
 
@@ -78,8 +77,7 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasher := auth.BcryptHasher{}
-	passwordHash, err := auth.HashPassword(password, hasher)
+	passwordHash, err := s.authService.HashPassword(password)
 	if err != nil {
 		http.Error(w, "Could not hash password", http.StatusInternalServerError)
 		return
@@ -92,6 +90,10 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 		PasswordHash: passwordHash,
 		DateOfBirth:  dateOfBirth,
 	})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("HX-Redirect", "/home")
 	w.WriteHeader(http.StatusCreated)
 }
