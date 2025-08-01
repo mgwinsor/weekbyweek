@@ -1,6 +1,86 @@
 package app
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+func TestValidateDateOfBirth(t *testing.T) {
+
+	tests := []struct {
+		name          string
+		dateOfBirth   string
+		wantValue     time.Time
+		wantError     bool
+		expectedError string
+	}{
+		{
+			name:          "successfully parse date of birth",
+			dateOfBirth:   "1992-11-21",
+			wantValue:     time.Date(1992, time.November, 21, 0, 0, 0, 0, time.UTC),
+			wantError:     false,
+			expectedError: "",
+		},
+		{
+			name:          "fails to parse a non-date input",
+			dateOfBirth:   "not-a-date",
+			wantValue:     time.Time{},
+			wantError:     true,
+			expectedError: ErrorDateOfBirthInvalid.Error(),
+		},
+		{
+			name:          "fails to parse invalid date",
+			dateOfBirth:   "1992-13-21",
+			wantValue:     time.Time{},
+			wantError:     true,
+			expectedError: ErrorDateOfBirthInvalid.Error(),
+		},
+		{
+			name:          "fails to parse invalid date format",
+			dateOfBirth:   "11-21-1992",
+			wantValue:     time.Time{},
+			wantError:     true,
+			expectedError: ErrorDateOfBirthInvalid.Error(),
+		},
+		{
+			name:          "fails birthday in the future",
+			dateOfBirth:   "3000-01-01",
+			wantValue:     time.Time{},
+			wantError:     true,
+			expectedError: ErrorDateOfBirthInFutre.Error(),
+		},
+		{
+			name:          "fails birthday too old",
+			dateOfBirth:   "1900-01-01",
+			wantValue:     time.Time{},
+			wantError:     true,
+			expectedError: ErrorDateOfBirthTooOld.Error(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := validateDateOfBirth(tt.dateOfBirth)
+
+			if tt.wantError {
+				if err == nil {
+					t.Fatal("expected an error; got 'nil'")
+				}
+				if err.Error() != tt.expectedError {
+					t.Errorf("expected error '%s'; got '%s'", tt.expectedError, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("did not expect an error; got '%v'", err)
+				}
+			}
+
+			if got != tt.wantValue {
+				t.Errorf("wanted %v; got %v", tt.wantValue, got)
+			}
+		})
+	}
+}
 
 func TestValidateUsernameSyntax(t *testing.T) {
 	tests := []struct {

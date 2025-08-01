@@ -49,7 +49,17 @@
 
     <div class="form-group">
       <label for="dob">Date of Birth</label>
-      <input type="date" id="dob" name="dob" required />
+      <input
+        type="date"
+        id="dob"
+        name="dob"
+        value="{{ .FormValues.dob }}"
+        class="form-control {{if .Errors.dob }}is-invalid{{ end }}"
+        required
+      />
+      {{ if .Errors.dob }}
+      <div class="invalid-feedback">{{ .Errors.dob }}</div>
+      {{ end }}
     </div>
 
     <button type="submit">Register</button>

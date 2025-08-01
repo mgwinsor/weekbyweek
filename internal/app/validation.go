@@ -3,10 +3,15 @@ package app
 import (
 	"errors"
 	"net/mail"
+	"time"
 	"unicode"
 )
 
 var (
+	ErrorDateOfBirthInvalid = errors.New("Must provide a valid date of birth in format YYYY-MM-DD")
+	ErrorDateOfBirthInFutre = errors.New("Date of birth cannot be in the future")
+	ErrorDateOfBirthTooOld  = errors.New("Date of birth cannot be too far in the past")
+
 	ErrorUsernameTooShort     = errors.New("Username must be between 3 and 21 characters")
 	ErrorUsernameTooLong      = errors.New("Username must be between 3 and 21 characters")
 	ErrorUsernameInvalidChars = errors.New("Username can only contain letters, numbers, and underscores")
@@ -21,6 +26,23 @@ var (
 	ErrorPasswordMissingNumber      = errors.New("Password must contain at least 1 number")
 	ErrorPasswordMissingSpecialChar = errors.New("Password must contain at least 1 special character")
 )
+
+func validateDateOfBirth(dateOfBirth string) (time.Time, error) {
+	dob, err := time.Parse(time.DateOnly, dateOfBirth)
+	if err != nil {
+		return time.Time{}, ErrorDateOfBirthInvalid
+	}
+
+	if dob.After(time.Now()) {
+		return time.Time{}, ErrorDateOfBirthInFutre
+	}
+
+	if dob.Before(time.Now().AddDate(-90, 0, 0)) {
+		return time.Time{}, ErrorDateOfBirthTooOld
+	}
+
+	return dob, nil
+}
 
 func validateUsernameSyntax(username string) error {
 	if len(username) < 3 {

@@ -35,6 +35,13 @@ func TestRegisterPost(t *testing.T) {
 			notWantBodyContains: "Create Your Account",
 		},
 		{
+			name:             "fails to create user with invalid date of birth",
+			mockDB:           newDefaultMockDB(),
+			formInput:        "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-13-21",
+			wantCode:         http.StatusOK,
+			wantBodyContains: ErrorDateOfBirthInvalid.Error(),
+		},
+		{
 			name: "fails to create user with duplicate username",
 			mockDB: func() *mockDB {
 				m := newDefaultMockDB()
@@ -129,11 +136,11 @@ func TestRegisterPost(t *testing.T) {
 
 			body := rr.Body.String()
 			if !strings.Contains(body, tt.wantBodyContains) {
-				t.Errorf("expected body to contain %s; it did not", tt.wantBodyContains)
+				t.Errorf("expected body to contain '%s'; it did not", tt.wantBodyContains)
 			}
 
 			if tt.notWantBodyContains != "" && strings.Contains(body, tt.notWantBodyContains) {
-				t.Errorf("expected body NOT to contain %s; it did", tt.notWantBodyContains)
+				t.Errorf("expected body NOT to contain '%s'; it did", tt.notWantBodyContains)
 			}
 		})
 	}

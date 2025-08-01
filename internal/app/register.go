@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/mgwinsor/weekbyweek/internal/database"
@@ -33,11 +32,7 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
-	dateOfBirth, err := time.Parse(time.DateOnly, r.FormValue("dob"))
-	if err != nil {
-		http.Error(w, "Invalid date of birth", http.StatusBadRequest)
-		return
-	}
+	dob := r.FormValue("dob")
 
 	if err := validateUsernameSyntax(username); err != nil {
 		data.Errors["username"] = err.Error()
@@ -49,6 +44,11 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 
 	if err := valdiatePassword(password); err != nil {
 		data.Errors["password"] = err.Error()
+	}
+
+	dateOfBirth, err := validateDateOfBirth(dob)
+	if err != nil {
+		data.Errors["dob"] = err.Error()
 	}
 
 	if _, exists := data.Errors["username"]; !exists {
