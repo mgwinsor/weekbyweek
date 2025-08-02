@@ -23,11 +23,8 @@ func TestRegisterPost(t *testing.T) {
 		notWantBodyContains string
 	}{
 		{
-			name: "successfully creates user",
-			mockAuth: &mockAuthAdapter{
-				hash: "hashed-password",
-				err:  nil,
-			},
+			name:                "successfully creates user",
+			mockAuth:            &mockAuthAdapter{hash: "hashed-password", err: nil},
 			mockDB:              newDefaultMockDB(),
 			formInput:           "username=newuser&email=new@example.com&password=A$$w0rd12345&dob=1992-11-21",
 			wantCode:            http.StatusCreated,
@@ -105,7 +102,7 @@ func TestRegisterPost(t *testing.T) {
 				return m
 			}(),
 			wantCode:         http.StatusInternalServerError,
-			wantBodyContains: "Internal Server Error",
+			wantBodyContains: "Error reading username from database",
 		},
 		{
 			name:      "fails to get data from database with email",
@@ -116,7 +113,7 @@ func TestRegisterPost(t *testing.T) {
 				return m
 			}(),
 			wantCode:         http.StatusInternalServerError,
-			wantBodyContains: "Internal Server Error",
+			wantBodyContains: "Error reading email from database",
 		},
 	}
 

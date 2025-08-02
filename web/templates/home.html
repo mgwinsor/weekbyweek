@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Life in Weeks - Visualize Your Life</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"
+      integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/">Week by Week</a>
+        <a
+          href="/logout"
+          hx-get="/logout"
+          hx-target="#main-content"
+          hx-push-url="true"
+          >Logout</a
+        >
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="hero">
+        <h1>Your Life in Weeks</h1>
+        <p>
+          This is your life grid. Each block is one week, each row is one year
+          of your life.
+        </p>
+      </section>
+
+      <!-- A visual representation of the life grid can be included here -->
+    </main>
+
+    <footer>
+      <!-- Footer content -->
+    </footer>
+  </body>
+</html>

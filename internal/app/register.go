@@ -56,7 +56,8 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			data.Errors["username"] = ErrorUsernameExists.Error()
 		} else if err != sql.ErrNoRows {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Error reading username from database", http.StatusInternalServerError)
+			log.Print(err)
 			return
 		}
 	}
@@ -66,7 +67,8 @@ func (s *Server) registerPost(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			data.Errors["email"] = ErrorEmailExists.Error()
 		} else if err != sql.ErrNoRows {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			log.Print(err)
+			http.Error(w, "Error reading email from database", http.StatusInternalServerError)
 			return
 		}
 	}

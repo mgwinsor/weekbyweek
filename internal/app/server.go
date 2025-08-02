@@ -42,4 +42,6 @@ func (s *Server) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /register", s.registerPost)
 
 	mux.HandleFunc("GET /login", s.loginGet)
+
+	mux.HandleFunc("GET /home", s.homeGet)
 }
