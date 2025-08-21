@@ -1,0 +1,10 @@
+@startuml
+class User {
+    + ID : UUID
+    + Email : string
+    + UserName : string
+    + DateOfBirth : Time
+    __
+    {static} + NewUser(...) : (*User, error)
+}
+@enduml
