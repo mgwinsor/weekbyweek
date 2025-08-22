@@ -11,7 +11,7 @@ import (
 type User struct {
 	id          uuid.UUID
 	email       string
-	userName    string
+	username    string
 	dateOfBirth time.Time
 	createdAt   time.Time
 	updatedAt   time.Time
@@ -33,7 +33,7 @@ func NewUser(email, userName string, dateOfBirth time.Time) (*User, error) {
 	return &User{
 		id:          uuid.New(),
 		email:       email,
-		userName:    userName,
+		username:    userName,
 		dateOfBirth: dateOfBirth,
 		createdAt:   time.Now().UTC(),
 		updatedAt:   time.Now().UTC(),
@@ -42,7 +42,7 @@ func NewUser(email, userName string, dateOfBirth time.Time) (*User, error) {
 
 func (u *User) ID() uuid.UUID          { return u.id }
 func (u *User) Email() string          { return u.email }
-func (u *User) UserName() string       { return u.userName }
+func (u *User) Username() string       { return u.username }
 func (u *User) DateOfBirth() time.Time { return u.dateOfBirth }
 func (u *User) CreatedAt() time.Time   { return u.createdAt }
 func (u *User) UpdatedAt() time.Time   { return u.updatedAt }

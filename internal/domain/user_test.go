@@ -15,7 +15,7 @@ func TestNewUser(t *testing.T) {
 	tests := []struct {
 		name        string
 		email       string
-		userName    string
+		username    string
 		dateOfBirth time.Time
 		wantErr     bool
 	}{
@@ -28,7 +28,7 @@ func TestNewUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user, err := NewUser(tt.email, tt.userName, tt.dateOfBirth)
+			user, err := NewUser(tt.email, tt.username, tt.dateOfBirth)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewUser() error = %v, wantErr %v", err, tt.wantErr)
@@ -43,8 +43,8 @@ func TestNewUser(t *testing.T) {
 				if user.Email() != tt.email {
 					t.Errorf("Expected email %s, got %s", tt.email, user.Email())
 				}
-				if user.UserName() != tt.userName {
-					t.Errorf("Expected username %s, got %s", tt.userName, user.UserName())
+				if user.Username() != tt.username {
+					t.Errorf("Expected username %s, got %s", tt.username, user.Username())
 				}
 				if user.DateOfBirth() != tt.dateOfBirth {
 					t.Errorf("Expected date of birth %v, got %v", validDOB, user.DateOfBirth())
