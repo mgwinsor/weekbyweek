@@ -8,26 +8,26 @@ import (
 	"github.com/mgwinsor/weekbyweek/internal/domain/user"
 )
 
-type userRepository struct {
+type inMemoryUserRepository struct {
 	users map[uuid.UUID]*user.User
 	mu    sync.RWMutex
 }
 
 func NewUserRepository() user.UserRepository {
-	return &userRepository{
+	return &inMemoryUserRepository{
 		users: make(map[uuid.UUID]*user.User),
 		mu:    sync.RWMutex{},
 	}
 }
 
-func (r *userRepository) Save(ctx context.Context, user *user.User) error {
+func (r *inMemoryUserRepository) Save(ctx context.Context, user *user.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.users[user.ID()] = user
 	return nil
 }
 
-func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+func (r *inMemoryUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -38,7 +38,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*user.User
 	return u, nil
 }
 
-func (r *userRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *inMemoryUserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
