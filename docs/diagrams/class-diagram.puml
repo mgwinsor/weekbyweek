@@ -1,0 +1,129 @@
+@startuml
+' =====================================================================
+' ==                       STYLING & THEME                           ==
+' =====================================================================
+
+skinparam {
+    shadowing false
+    RoundCorner 10
+    DefaultFontName "Segoe UI, Helvetica" ' A clean, standard font
+    DefaultFontSize 12
+
+    package {
+        BorderColor #505050
+        BackgroundColor #F8F8F8
+        FontColor #333333
+        stereotypeFontColor #333333
+    }
+}
+
+skinparam class {
+    BackgroundColor<<Domain Entity>> #FFF2D4
+    BorderColor<<Domain Entity>> #D4A945
+
+    BackgroundColor<<Application Service>> #D4E6F7
+    BorderColor<<Application Service>> #458FD4
+
+    BackgroundColor<<DTO>> #E3F7D4
+    BorderColor<<DTO>> #77D445
+
+    BackgroundColor<<Adapter>> #D4F7F2
+    BorderColor<<Adapter>> #45D4B7
+}
+skinparam interface {
+    BackgroundColor<<Port>> #F7E3D4
+    BorderColor<<Port>> #D47745
+}
+
+
+' =====================================================================
+' ==              DIAGRAM DEFINITION & LAYOUT CONTROL                ==
+' =====================================================================
+
+package "Domain Layer" as Domain <<Rectangle>> {
+    package "user" {
+        class User <<Domain Entity>> {
+        	- id : UUID
+        	- email : string
+        	- username : string
+        	- dateOfBirth : Time
+        	- createdAt : Time
+        	- updatedAt : Time
+        	__
+        	{static} + NewUser(email, username, dateOfBirth) : (*User, error)
+        	__
+        	+ ID() : UUID
+        	+ Email() : string
+        	+ Username() : string
+        	+ DateOfBirth() : Time
+        	+ CreatedAt() : Time
+        	+ UpdatedAt() : Time
+        }
+
+        interface UserRepository <<Port>> {
+            + Save(ctx: Context, user: *User) : error
+            + FindByID(ctx: Context, id: UUID) : (*User, error)
+            + FindByEmail(ctx: Context, email: string) : (*User, error)
+        }
+        
+        UserRepository ..> User : "uses"
+    }
+}
+
+package "Application Layer" as App <<Rectangle>> {
+    package "user" {
+        class UserService <<Application Service>> {
+            - repo: UserRepository
+            __
+            {static} + NewService(repo: UserRepository) *UserService
+            __
+            + CreateUser(ctx: Context, req: CreateUserRequest) (*UserResponse, error)
+        }
+
+        class CreateUserRequest <<DTO>> {
+            + Email : string
+            + Username : string
+            + DateOfBirth : Time
+        }
+
+        class UserResponse <<DTO>> {
+            + ID : UUID
+            + Email : string
+            + Username : string
+            + DateOfBirth : string
+        }
+    }
+
+    UserService ..> CreateUserRequest : "uses"
+    UserService ..> UserResponse : "uses"
+}
+
+package "Infrastructure Layer" as Infra <<Rectangle>> {
+    package "memory" {
+        class inMemoryUserRepository <<Adapter>> {
+            - users: map[UUID]*User
+            __
+            + NewUserRepository() : UserRepository
+            + Save(ctx: Context, user: *User) : error
+            + FindByID(ctx: Context, id: UUID) : (*User, error)
+            + FindByEmail(ctx: Context, email: string) : (*User, error)
+        }
+    }
+}
+
+' =====================================================================
+' ==                   RELATIONSHIPS (with direction)                ==
+' =====================================================================
+
+' --- Application Layer Dependencies ---
+UserService -right-> UserRepository : "has-a"
+UserService .right.> User : "uses"
+
+' --- Infrastructure Layer Dependencies ---
+inMemoryUserRepository -left-|> UserRepository : "implements"
+inMemoryUserRepository .left.> User : "uses"
+
+' --- Add a title to provide overall context ---
+title Hexagonal Architecture for User Creation Feature
+
+@enduml
