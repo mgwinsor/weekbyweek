@@ -75,7 +75,7 @@ package "Application Layer" as App <<Rectangle>> {
         class UserService <<Application Service>> {
             - repo: UserRepository
             __
-            {static} + NewService(repo: UserRepository) *UserService
+            {static} + NewUserService(repo: UserRepository) *UserService
             __
             + CreateUser(ctx: Context, req: CreateUserRequest) (*UserResponse, error)
         }

@@ -100,9 +100,9 @@ func TestCreateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(tt.mockRepo)
+			userService := NewUserService(tt.mockRepo)
 
-			_, err := service.CreateUser(context.Background(), tt.req)
+			_, err := userService.CreateUser(context.Background(), tt.req)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateUser() error = %v, wantErr %v", err, tt.wantErr)
