@@ -17,7 +17,7 @@ func NewUserService(repo user.UserRepository) *UserService {
 	return &UserService{userRepo: repo}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (*UserResponse, error) {
+func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (*CreateUserResponse, error) {
 	_, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err == nil {
 		return nil, ErrEmailExists
@@ -35,7 +35,7 @@ func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (*U
 		return nil, err
 	}
 
-	resp := &UserResponse{
+	resp := &CreateUserResponse{
 		ID:          newUser.ID(),
 		Email:       newUser.Email(),
 		Username:    newUser.Username(),

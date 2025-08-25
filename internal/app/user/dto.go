@@ -12,7 +12,7 @@ type CreateUserRequest struct {
 	DateOfBirth time.Time
 }
 
-type UserResponse struct {
+type CreateUserResponse struct {
 	ID          uuid.UUID
 	Email       string
 	Username    string
