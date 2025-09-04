@@ -43,41 +43,45 @@ skinparam interface {
 package "Domain Layer" as Domain <<Rectangle>> {
     package "user" {
         class User <<Domain Entity>> {
-        	- id : UUID
-        	- email : string
-        	- username : string
-        	- dateOfBirth : Time
-        	- createdAt : Time
-        	- updatedAt : Time
-        	__
-        	{static} + NewUser(email, username, dateOfBirth) : (*User, error)
-        	__
-        	+ ID() : UUID
-        	+ Email() : string
-        	+ Username() : string
-        	+ DateOfBirth() : Time
-        	+ CreatedAt() : Time
-        	+ UpdatedAt() : Time
+            - id : UUID
+            - email : string
+            - username : string
+            - dateOfBirth : Time
+            - createdAt : Time
+            - updatedAt : Time
+            __
+            {static} + NewUser(email, username, dateOfBirth) (*User, error)
+            __
+            + ID() : UUID
+            + Email() : string
+            + Username() : string
+            + DateOfBirth() : Time
+            + CreatedAt() : Time
+            + UpdatedAt() : Time
         }
 
         interface UserRepository <<Port>> {
-            + Save(ctx: Context, user: *User) : error
-            + FindByID(ctx: Context, id: UUID) : (*User, error)
-            + FindByEmail(ctx: Context, email: string) : (*User, error)
+            + Save(ctx: Context, user: *User) error
+            + FindByID(ctx: Context, id: UUID) (*User, error)
+            + FindByEmail(ctx: Context, email: string) (*User, error)
         }
-        
-        UserRepository ..> User : "uses"
+
+        UserRepository ..> User
     }
 }
 
 package "Application Layer" as App <<Rectangle>> {
     package "user" {
+        interface Service <<Application Service>> {
+            + CreateUser(ctx: Context, req: CreateUserRequest) (*CreateUserResponse, error)
+        }
+
         class UserService <<Application Service>> {
             - repo: UserRepository
             __
             {static} + NewUserService(repo: UserRepository) *UserService
             __
-            + CreateUser(ctx: Context, req: CreateUserRequest) (*UserResponse, error)
+            + CreateUser(ctx: Context, req: CreateUserRequest) (*CreateUserResponse, error)
         }
 
         class CreateUserRequest <<DTO>> {
@@ -90,23 +94,38 @@ package "Application Layer" as App <<Rectangle>> {
             + ID : UUID
             + Email : string
             + Username : string
-            + DateOfBirth : string
+            + DateOfBirth : Time
         }
     }
 
-    UserService ..> CreateUserRequest : "uses"
-    UserService ..> UserResponse : "uses"
+    UserService -u-|> Service
+    UserService ..> CreateUserRequest
+    UserService ..> UserResponse
 }
 
-package "Infrastructure Layer" as Infra <<Rectangle>> {
+package "Primary Adapters Layer" as Primary <<Rectangle>> {
+    package "api" {
+        class Server<<Adapter>> {
+            - service: Service
+	    __
+            {static} + NewServer(service: UserService)
+	    __
+	    + RegisterRoutes() http.Handler
+            - handleCreateUser(w: http.ResponseWriter, r: *http.Request)
+        }
+    }
+}
+
+package "Secondary Adapters Layer" as Infra <<Rectangle>> {
     package "memory" {
-        class inMemoryUserRepository <<Adapter>> {
+        class InMemoryUserRepository <<Adapter>> {
             - users: map[UUID]*User
             __
-            + NewUserRepository() : UserRepository
-            + Save(ctx: Context, user: *User) : error
-            + FindByID(ctx: Context, id: UUID) : (*User, error)
-            + FindByEmail(ctx: Context, email: string) : (*User, error)
+            {static} + NewUserRepository() UserRepository
+            __
+            + Save(ctx: Context, user: *User) error
+            + FindByID(ctx: Context, id: UUID) (*User, error)
+            + FindByEmail(ctx: Context, email: string) (*User, error)
         }
     }
 }
@@ -117,11 +136,16 @@ package "Infrastructure Layer" as Infra <<Rectangle>> {
 
 ' --- Application Layer Dependencies ---
 UserService -right-> UserRepository : "has-a"
-UserService .right.> User : "uses"
+UserService .right.> User
 
-' --- Infrastructure Layer Dependencies ---
-inMemoryUserRepository -left-|> UserRepository : "implements"
-inMemoryUserRepository .left.> User : "uses"
+' --- Primary Adapters Layer Dependencies ---
+Server -r-> Service : "has-a"
+Server .r.> CreateUserRequest
+Server .r.> UserResponse
+
+' --- Secondary Adapters Layer Dependencies ---
+InMemoryUserRepository -left-|> UserRepository
+InMemoryUserRepository .left.> User
 
 ' --- Add a title to provide overall context ---
 title Hexagonal Architecture for User Creation Feature
