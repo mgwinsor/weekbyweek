@@ -9,15 +9,19 @@ import (
 
 var ErrEmailExists = errors.New("email already exists")
 
-type UserService struct {
+type Service interface {
+	CreateUser(ctx context.Context, req CreateUserRequest) (*CreateUserResponse, error)
+}
+
+type userService struct {
 	userRepo user.UserRepository
 }
 
-func NewUserService(repo user.UserRepository) *UserService {
-	return &UserService{userRepo: repo}
+func NewUserService(repo user.UserRepository) *userService {
+	return &userService{userRepo: repo}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (*CreateUserResponse, error) {
+func (s *userService) CreateUser(ctx context.Context, req CreateUserRequest) (*CreateUserResponse, error) {
 	_, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err == nil {
 		return nil, ErrEmailExists

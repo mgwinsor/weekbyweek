@@ -24,7 +24,7 @@ func TestCreateUserIntegration(t *testing.T) {
 		name             string
 		request          user.CreateUserRequest
 		preExistingUsers []user.CreateUserRequest
-		setupFn          func(*user.UserService)
+		setupFn          func(*user.Service)
 		wantErr          bool
 	}{
 		{
