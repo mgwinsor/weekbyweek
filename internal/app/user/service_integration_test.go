@@ -1,11 +1,10 @@
-package integration
+package user
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/mgwinsor/weekbyweek/internal/app/user"
 	"github.com/mgwinsor/weekbyweek/internal/secondary/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +13,7 @@ import (
 func TestCreateUserIntegration(t *testing.T) {
 	dob := time.Date(1992, time.November, 21, 0, 0, 0, 0, time.UTC)
 
-	newUserRequest := user.CreateUserRequest{
+	newUserRequest := CreateUserRequest{
 		Email:       "john@example.com",
 		Username:    "johndoe",
 		DateOfBirth: dob,
@@ -22,9 +21,9 @@ func TestCreateUserIntegration(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		request          user.CreateUserRequest
-		preExistingUsers []user.CreateUserRequest
-		setupFn          func(*user.Service)
+		request          CreateUserRequest
+		preExistingUsers []CreateUserRequest
+		setupFn          func(*Service)
 		wantErr          bool
 	}{
 		{
@@ -38,7 +37,7 @@ func TestCreateUserIntegration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			userRepo := memory.NewUserRepository()
-			userService := user.NewUserService(userRepo)
+			userService := NewUserService(userRepo)
 
 			for _, req := range tt.preExistingUsers {
 				_, err := userService.CreateUser(context.Background(), req)
