@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/mgwinsor/weekbyweek/internal/app/user"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +98,7 @@ func TestUserAPIIntegration(t *testing.T) {
 			tt.mockSetup(mockService)
 
 			server := NewUserHandler(mockService)
-			router := server.RegisterRoutes()
+			router := server.RegisterRoutes(chi.NewRouter())
 
 			ts := httptest.NewServer(router)
 			defer ts.Close()

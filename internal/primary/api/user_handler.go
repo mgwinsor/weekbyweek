@@ -20,8 +20,7 @@ func NewUserHandler(service user.Service) *UserHandler {
 	}
 }
 
-func (h *UserHandler) RegisterRoutes() http.Handler {
-	r := chi.NewRouter()
+func (h *UserHandler) RegisterRoutes(r chi.Router) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
