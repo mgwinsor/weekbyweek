@@ -96,7 +96,7 @@ func TestUserAPIIntegration(t *testing.T) {
 			mockService := new(MockUserService)
 			tt.mockSetup(mockService)
 
-			server := NewServer(mockService)
+			server := NewUserHandler(mockService)
 			router := server.RegisterRoutes()
 
 			ts := httptest.NewServer(router)

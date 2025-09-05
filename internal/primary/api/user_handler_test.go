@@ -114,7 +114,7 @@ func TestHandleCreateUser(t *testing.T) {
 			mockService := new(MockUserService)
 			tt.mockSetup(mockService)
 
-			server := NewServer(mockService)
+			server := NewUserHandler(mockService)
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("POST", "/users", bytes.NewBufferString(tt.inputBody))
 
