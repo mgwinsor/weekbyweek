@@ -105,10 +105,10 @@ package "Application Layer" as App <<Rectangle>> {
 
 package "Primary Adapters Layer" as Primary <<Rectangle>> {
     package "api" {
-        class Server<<Adapter>> {
-            - service: Service
+        class UserHandler<<Adapter>> {
+            - userService: Service
 	    __
-            {static} + NewServer(service: UserService)
+            {static} + NewUserHandler(service: Service)
 	    __
 	    + RegisterRoutes() http.Handler
             - handleCreateUser(w: http.ResponseWriter, r: *http.Request)
@@ -135,13 +135,13 @@ package "Secondary Adapters Layer" as Infra <<Rectangle>> {
 ' =====================================================================
 
 ' --- Application Layer Dependencies ---
-UserService -right-> UserRepository : "has-a"
+UserService -right-> UserRepository
 UserService .right.> User
 
 ' --- Primary Adapters Layer Dependencies ---
-Server -r-> Service : "has-a"
-Server .r.> CreateUserRequest
-Server .r.> UserResponse
+UserHandler -r-> Service
+UserHandler .r.> CreateUserRequest
+UserHandler .r.> UserResponse
 
 ' --- Secondary Adapters Layer Dependencies ---
 InMemoryUserRepository -left-|> UserRepository
