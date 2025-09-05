@@ -56,15 +56,15 @@ func TestHandleCreateUser(t *testing.T) {
 	tests := []struct {
 		name               string
 		inputBody          string
-		mockSetup          func(MockService *MockUserService)
+		mockSetup          func(m *MockUserService)
 		expectedStatusCode int
 		expectedBody       string
 	}{
 		{
 			name:      "successfully created user",
 			inputBody: string(requestBody),
-			mockSetup: func(MockService *MockUserService) {
-				MockService.On("CreateUser", mock.Anything, requestDTO).
+			mockSetup: func(m *MockUserService) {
+				m.On("CreateUser", mock.Anything, requestDTO).
 					Return(&successResponseDTO, nil).
 					Once()
 			},
@@ -74,8 +74,8 @@ func TestHandleCreateUser(t *testing.T) {
 		{
 			name:      "email exists error",
 			inputBody: string(requestBody),
-			mockSetup: func(MockService *MockUserService) {
-				MockService.On("CreateUser", mock.Anything, requestDTO).
+			mockSetup: func(m *MockUserService) {
+				m.On("CreateUser", mock.Anything, requestDTO).
 					Return(nil, user.ErrEmailExists).
 					Once()
 			},
@@ -85,22 +85,22 @@ func TestHandleCreateUser(t *testing.T) {
 		{
 			name:               "email is not a string",
 			inputBody:          newCreateUserPayload(map[string]any{"email": 1234}),
-			mockSetup:          func(MockService *MockUserService) {},
+			mockSetup:          func(m *MockUserService) {},
 			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       "Invalid request body",
 		},
 		{
 			name:               "invalid date of birth format",
 			inputBody:          newCreateUserPayload(map[string]any{"dob": "21-11-1992"}),
-			mockSetup:          func(MockService *MockUserService) {},
+			mockSetup:          func(m *MockUserService) {},
 			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       "Invalid request body",
 		},
 		{
 			name:      "unexpected error",
 			inputBody: string(requestBody),
-			mockSetup: func(MockService *MockUserService) {
-				MockService.On("CreateUser", mock.Anything, requestDTO).
+			mockSetup: func(m *MockUserService) {
+				m.On("CreateUser", mock.Anything, requestDTO).
 					Return(nil, errors.New("unexpected error")).
 					Once()
 			},
