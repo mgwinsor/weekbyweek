@@ -8,21 +8,32 @@ import (
 	"github.com/google/uuid"
 )
 
+var ErrEmptyEmail = errors.New("email cannot be empty")
+var ErrInvalidEmailFormat = errors.New("incorrect email format")
+var ErrEmptyUsername = errors.New("username cannot be empty")
+var ErrPasswordMinimumLenth = errors.New("password must be at least 8 characters long")
+var ErrMininumAge = errors.New("user must be at least 13 years old")
+
 type User struct {
-	id          uuid.UUID
-	email       string
-	username    string
-	dateOfBirth time.Time
-	createdAt   time.Time
-	updatedAt   time.Time
+	id           uuid.UUID
+	email        string
+	username     string
+	passwordHash string
+	dateOfBirth  time.Time
+	createdAt    time.Time
+	updatedAt    time.Time
 }
 
-func NewUser(email, userName string, dateOfBirth time.Time) (*User, error) {
+func NewUser(email, username, password string, dateOfBirth time.Time, hasher PasswordHasher) (*User, error) {
 	if err := validateEmail(email); err != nil {
 		return nil, err
 	}
 
-	if err := validateUserName(userName); err != nil {
+	if err := validateUsername(username); err != nil {
+		return nil, err
+	}
+
+	if err := validatePassword(password); err != nil {
 		return nil, err
 	}
 
@@ -30,55 +41,60 @@ func NewUser(email, userName string, dateOfBirth time.Time) (*User, error) {
 		return nil, err
 	}
 
+	hashedPassword, err := hasher.Hash(password)
+	if err != nil {
+		return nil, err
+	}
+
 	return &User{
-		id:          uuid.New(),
-		email:       email,
-		username:    userName,
-		dateOfBirth: dateOfBirth,
-		createdAt:   time.Now().UTC(),
-		updatedAt:   time.Now().UTC(),
+		id:           uuid.New(),
+		email:        email,
+		username:     username,
+		passwordHash: hashedPassword,
+		dateOfBirth:  dateOfBirth,
+		createdAt:    time.Now().UTC(),
+		updatedAt:    time.Now().UTC(),
 	}, nil
 }
 
 func (u *User) ID() uuid.UUID          { return u.id }
 func (u *User) Email() string          { return u.email }
 func (u *User) Username() string       { return u.username }
+func (u *User) PasswordHash() string   { return u.passwordHash }
 func (u *User) DateOfBirth() time.Time { return u.dateOfBirth }
 func (u *User) CreatedAt() time.Time   { return u.createdAt }
 func (u *User) UpdatedAt() time.Time   { return u.updatedAt }
 
 func validateEmail(email string) error {
 	if email == "" {
-		return errors.New("email cannot be empty")
+		return ErrEmptyEmail
 	}
 
 	if !strings.Contains(email, "@") {
-		return errors.New("invalid email format")
+		return ErrInvalidEmailFormat
 	}
 
 	return nil
 }
 
-func validateUserName(userName string) error {
-	if userName == "" {
-		return errors.New("username cannot be empty")
+func validateUsername(username string) error {
+	if username == "" {
+		return ErrEmptyUsername
 	}
+	return nil
+}
 
+func validatePassword(password string) error {
+	if len(password) < 8 {
+		return ErrPasswordMinimumLenth
+	}
 	return nil
 }
 
 func validateDateOfBirth(dob time.Time) error {
-	if dob.IsZero() {
-		return errors.New("date of birth is required")
-	}
-
 	age := time.Since(dob).Hours() / 24 / 365.25
 	if age < 13 {
-		return errors.New("user must be at least 13 years old")
-	}
-
-	if dob.After(time.Now()) {
-		return errors.New("date of birth cannot be in the future")
+		return ErrMininumAge
 	}
 
 	return nil
