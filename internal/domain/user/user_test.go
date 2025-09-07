@@ -11,7 +11,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var errHasherFailed = errors.New("hashing error")
+const (
+	validPassword  = "12345678"
+	hashedPassword = "hashed-password"
+)
+
+var (
+	errHasherFailed    = errors.New("hashing error")
+	validDOB           = time.Date(1992, time.November, 21, 0, 0, 0, 0, time.UTC)
+	validNewUserParams = NewUserParams{
+		Email:       "john@example.com",
+		Username:    "johndoe",
+		Password:    validPassword,
+		DateOfBirth: validDOB,
+	}
+)
 
 type MockPasswordHasher struct {
 	mock.Mock
@@ -27,28 +41,22 @@ func (m *MockPasswordHasher) Compare(hashedPassword, password string) error {
 	return args.Error(0)
 }
 
-func TestNewUser(t *testing.T) {
-	validDOB := time.Date(1992, time.November, 21, 0, 0, 0, 0, time.UTC)
-	futureDOB := time.Now().Add(24 * time.Hour)
-	underageDOB := time.Now().Add(-10 * 365 * 24 * time.Hour)
-	validPassword := "password"
-	hashedPassword := "hashed-password"
+func withParams(modifier func(p *NewUserParams)) NewUserParams {
+	params := validNewUserParams
+	modifier(&params)
+	return params
+}
 
+func TestNewUser(t *testing.T) {
 	tests := []struct {
 		name        string
-		email       string
-		username    string
-		password    string
-		dateOfBirth time.Time
+		params      NewUserParams
 		mockSetup   func(m *MockPasswordHasher)
 		expectedErr error
 	}{
 		{
-			name:        "valid user",
-			email:       "john@example.com",
-			username:    "johndoe",
-			password:    validPassword,
-			dateOfBirth: validDOB,
+			name:   "valid user",
+			params: validNewUserParams,
 			mockSetup: func(m *MockPasswordHasher) {
 				m.On("Hash", validPassword).
 					Return(hashedPassword, nil).
@@ -58,64 +66,41 @@ func TestNewUser(t *testing.T) {
 		},
 		{
 			name:        "empty email",
-			email:       "",
-			username:    "johndoe",
-			password:    validPassword,
-			dateOfBirth: validDOB,
+			params:      withParams(func(p *NewUserParams) { p.Email = "" }),
 			mockSetup:   func(m *MockPasswordHasher) {},
-			expectedErr: ErrEmptyEmail,
+			expectedErr: ErrEmailRequired,
 		},
 		{
 			name:        "invalid email",
-			email:       "invalid",
-			username:    "johndoe",
-			password:    validPassword,
-			dateOfBirth: validDOB,
+			params:      withParams(func(p *NewUserParams) { p.Email = "invalid" }),
 			mockSetup:   func(m *MockPasswordHasher) {},
 			expectedErr: ErrInvalidEmailFormat,
 		},
 		{
 			name:        "empty username",
-			email:       "john@example.com",
-			username:    "",
-			password:    validPassword,
-			dateOfBirth: validDOB,
+			params:      withParams(func(p *NewUserParams) { p.Username = "" }),
 			mockSetup:   func(m *MockPasswordHasher) {},
-			expectedErr: ErrEmptyUsername,
+			expectedErr: ErrUsernameRequired,
 		},
 		{
-			name:        "future date of birth",
-			email:       "john@example.com",
-			username:    "johndoe",
-			password:    validPassword,
-			dateOfBirth: futureDOB,
-			mockSetup:   func(m *MockPasswordHasher) {},
-			expectedErr: ErrMininumAge,
-		},
-		{
-			name:        "underage",
-			email:       "john@example.com",
-			username:    "johndoe",
-			password:    validPassword,
-			dateOfBirth: underageDOB,
-			mockSetup:   func(m *MockPasswordHasher) {},
-			expectedErr: ErrMininumAge,
+			name:   "password is minimum length",
+			params: validNewUserParams,
+			mockSetup: func(m *MockPasswordHasher) {
+				m.On("Hash", validPassword).
+					Return(hashedPassword, nil).
+					Once()
+			},
+			expectedErr: nil,
 		},
 		{
 			name:        "password too short",
-			email:       "john@example.com",
-			username:    "johndoe",
-			password:    "pass",
-			dateOfBirth: validDOB,
+			params:      withParams(func(p *NewUserParams) { p.Password = "1234567" }),
 			mockSetup:   func(m *MockPasswordHasher) {},
-			expectedErr: ErrPasswordMinimumLenth,
+			expectedErr: ErrPasswordTooShort,
 		},
 		{
-			name:        "hashing error",
-			email:       "john@example.com",
-			username:    "johndoe",
-			password:    validPassword,
-			dateOfBirth: validDOB,
+			name:   "hashing error",
+			params: validNewUserParams,
 			mockSetup: func(m *MockPasswordHasher) {
 				m.On("Hash", validPassword).
 					Return("", errHasherFailed).
@@ -130,7 +115,7 @@ func TestNewUser(t *testing.T) {
 			mockHasher := new(MockPasswordHasher)
 			tt.mockSetup(mockHasher)
 
-			user, err := NewUser(tt.email, tt.username, tt.password, tt.dateOfBirth, mockHasher)
+			user, err := NewUser(tt.params, mockHasher)
 
 			if tt.expectedErr != nil {
 				require.ErrorIs(t, err, tt.expectedErr, "expected an error but got none")
@@ -140,11 +125,11 @@ func TestNewUser(t *testing.T) {
 				require.NotNil(t, user, "user should not be nil on success")
 
 				assert.NotEqual(t, uuid.Nil, user.ID(), "expected a valid UUID, but it was nil")
-				assert.Equal(t, tt.email, user.Email(), "email does not match expected")
-				assert.Equal(t, tt.username, user.Username(), "username does not match expected")
+				assert.Equal(t, tt.params.Email, user.Email(), "email does not match expected")
+				assert.Equal(t, tt.params.Username, user.Username(), "username does not match expected")
 				assert.NotEmpty(t, user.PasswordHash(), "password hash should be set on successful creation")
-				assert.NotEqual(t, tt.password, user.PasswordHash(), "password hash should not be the same as the raw password")
-				assert.Equal(t, tt.dateOfBirth, user.DateOfBirth(), "date of birth does not match expected")
+				assert.NotEqual(t, tt.params.Password, user.PasswordHash(), "password hash should not be the same as the raw password")
+				assert.Equal(t, tt.params.DateOfBirth, user.DateOfBirth(), "date of birth does not match expected")
 			}
 			mockHasher.AssertExpectations(t)
 		})
@@ -153,17 +138,19 @@ func TestNewUser(t *testing.T) {
 
 func TestNewUser_UniqueIDs(t *testing.T) {
 	mockHasher := new(MockPasswordHasher)
-	func(m *MockPasswordHasher) {
-		m.On("Hash", "password").
-			Return("hashed-password", nil).
-			Twice()
-	}(mockHasher)
+	mockHasher.On("Hash", validPassword).Return(hashedPassword, nil).Twice()
 
-	validDOB := time.Date(1992, time.November, 21, 0, 0, 0, 0, time.UTC)
-	user1, _ := NewUser("john1@example.com", "John 1", "password", validDOB, mockHasher)
-	user2, _ := NewUser("john2@example.com", "John 2", "password", validDOB, mockHasher)
+	params1 := validNewUserParams
+	params1.Email = "john1@example.com"
 
-	if user1.ID() == user2.ID() {
-		t.Error("Expected users to have different IDs")
-	}
+	params2 := validNewUserParams
+	params2.Email = "john2@example.com"
+
+	user1, err1 := NewUser(params1, mockHasher)
+	require.NoError(t, err1)
+
+	user2, err2 := NewUser(params2, mockHasher)
+	require.NoError(t, err2)
+
+	assert.NotEqual(t, user1.ID(), user2.ID(), "expected users to have different IDs")
 }

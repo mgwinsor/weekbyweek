@@ -8,11 +8,19 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrEmptyEmail = errors.New("email cannot be empty")
-var ErrInvalidEmailFormat = errors.New("incorrect email format")
-var ErrEmptyUsername = errors.New("username cannot be empty")
-var ErrPasswordMinimumLenth = errors.New("password must be at least 8 characters long")
-var ErrMininumAge = errors.New("user must be at least 13 years old")
+var (
+	ErrEmailRequired      = errors.New("email cannot be empty")
+	ErrInvalidEmailFormat = errors.New("incorrect email format")
+	ErrUsernameRequired   = errors.New("username cannot be empty")
+	ErrPasswordTooShort   = errors.New("password must be at least 8 characters long")
+)
+
+type NewUserParams struct {
+	Email       string
+	Username    string
+	Password    string
+	DateOfBirth time.Time
+}
 
 type User struct {
 	id           uuid.UUID
@@ -24,34 +32,30 @@ type User struct {
 	updatedAt    time.Time
 }
 
-func NewUser(email, username, password string, dateOfBirth time.Time, hasher PasswordHasher) (*User, error) {
-	if err := validateEmail(email); err != nil {
+func NewUser(params NewUserParams, hasher PasswordHasher) (*User, error) {
+	if err := validateEmail(params.Email); err != nil {
 		return nil, err
 	}
 
-	if err := validateUsername(username); err != nil {
+	if err := validateUsername(params.Username); err != nil {
 		return nil, err
 	}
 
-	if err := validatePassword(password); err != nil {
+	if err := validatePassword(params.Password); err != nil {
 		return nil, err
 	}
 
-	if err := validateDateOfBirth(dateOfBirth); err != nil {
-		return nil, err
-	}
-
-	hashedPassword, err := hasher.Hash(password)
+	hashedPassword, err := hasher.Hash(params.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	return &User{
 		id:           uuid.New(),
-		email:        email,
-		username:     username,
+		email:        params.Email,
+		username:     params.Username,
 		passwordHash: hashedPassword,
-		dateOfBirth:  dateOfBirth,
+		dateOfBirth:  params.DateOfBirth,
 		createdAt:    time.Now().UTC(),
 		updatedAt:    time.Now().UTC(),
 	}, nil
@@ -67,7 +71,7 @@ func (u *User) UpdatedAt() time.Time   { return u.updatedAt }
 
 func validateEmail(email string) error {
 	if email == "" {
-		return ErrEmptyEmail
+		return ErrEmailRequired
 	}
 
 	if !strings.Contains(email, "@") {
@@ -79,23 +83,14 @@ func validateEmail(email string) error {
 
 func validateUsername(username string) error {
 	if username == "" {
-		return ErrEmptyUsername
+		return ErrUsernameRequired
 	}
 	return nil
 }
 
 func validatePassword(password string) error {
 	if len(password) < 8 {
-		return ErrPasswordMinimumLenth
+		return ErrPasswordTooShort
 	}
-	return nil
-}
-
-func validateDateOfBirth(dob time.Time) error {
-	age := time.Since(dob).Hours() / 24 / 365.25
-	if age < 13 {
-		return ErrMininumAge
-	}
-
 	return nil
 }
