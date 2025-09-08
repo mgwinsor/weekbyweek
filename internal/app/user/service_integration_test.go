@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mgwinsor/weekbyweek/internal/secondary/auth"
 	"github.com/mgwinsor/weekbyweek/internal/secondary/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,7 @@ func TestCreateUserIntegration(t *testing.T) {
 	newUserRequest := CreateUserRequest{
 		Email:       "john@example.com",
 		Username:    "johndoe",
+		Password:    "12345678",
 		DateOfBirth: dob,
 	}
 
@@ -37,7 +39,8 @@ func TestCreateUserIntegration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			userRepo := memory.NewUserRepository()
-			userService := NewUserService(userRepo)
+			passwordHasher := auth.BcryptHasher{}
+			userService := NewUserService(userRepo, &passwordHasher)
 
 			for _, req := range tt.preExistingUsers {
 				_, err := userService.CreateUser(context.Background(), req)

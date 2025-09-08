@@ -14,11 +14,15 @@ type Service interface {
 }
 
 type userService struct {
-	userRepo user.UserRepository
+	userRepo       user.UserRepository
+	passwordHasher user.PasswordHasher
 }
 
-func NewUserService(repo user.UserRepository) *userService {
-	return &userService{userRepo: repo}
+func NewUserService(repo user.UserRepository, hasher user.PasswordHasher) *userService {
+	return &userService{
+		userRepo:       repo,
+		passwordHasher: hasher,
+	}
 }
 
 func (s *userService) CreateUser(ctx context.Context, req CreateUserRequest) (*CreateUserResponse, error) {
@@ -30,7 +34,14 @@ func (s *userService) CreateUser(ctx context.Context, req CreateUserRequest) (*C
 		return nil, err
 	}
 
-	newUser, err := user.NewUser(req.Email, req.Username, req.DateOfBirth)
+	newUserParams := user.NewUserParams{
+		Email:       req.Email,
+		Username:    req.Username,
+		Password:    req.Password,
+		DateOfBirth: req.DateOfBirth,
+	}
+
+	newUser, err := user.NewUser(newUserParams, s.passwordHasher)
 	if err != nil {
 		return nil, err
 	}
